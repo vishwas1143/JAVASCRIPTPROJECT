@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>calculating the products</title>
+  </head>
+  <body>
+    <form id="form">
+        <label>Product Name:</label>
+      <input id="product" type="text" placeholder="Product Name" />
+      <label>Price:</label>
+
+      <input id="price" type="number" placeholder="Price" />
+      <button>submit</button>
+    </form>
+    <h2>Products</h2>
+    <ul id="product_list"></ul>
+    <h3>SubTotal :- Rs <span type="number" value="0" id="total">0</span></h3>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script>
+      let subTotal = document.getElementById("total");
+      let form = document.querySelector("#form");
+      form.addEventListener("submit", addItem);
+      async function addItem(event) {
+        event.preventDefault();
+        const itemName = event.target.product.value;
+        const itemPrice = event.target.price.value;
+
+        const obj = {
+          itemName,
+          itemPrice,
+        };
+
+        const postData = await axios.post(
+          `https://crudcrud.com/api/b5e5eb1c40b84d57aab6c09a44baa9f1/products`,
+          obj
+        );
+        console.log(postData.data);
+        showUseronScreen(postData.data);
+        form.reset();
+      }
+
+      document.addEventListener(
+        "DOMContentLoaded",
+        async function gettDataAfterRefresh() {
+          const getData = await axios.get(
+            "https://crudcrud.com/api/b5e5eb1c40b84d57aab6c09a44baa9f1/products"
+          );
+          for (let i = 0; i < getData.data.length; i++) {
+            showUseronScreen(getData.data[i]);
+          }
+          console.log(getData);
+        }
+      );
+
+      function showUseronScreen(data) {
+        const parentElem = document.getElementById("product_list");
+
+        //  create a child element
+        const childElem = document.createElement("li");
+        childElem.id = `${data._id}`;
+        childElem.textContent = `${data.itemName} ${data.itemPrice}`;
+        parentElem.appendChild(childElem);
+        // create a delete button
+        let deleteBtn = document.createElement("button");
+        deleteBtn.appendChild(document.createTextNode("Delete"));
+        childElem.appendChild(deleteBtn);
+        // create edit button
+        let editBtn = document.createElement("button");
+        editBtn.appendChild(document.createTextNode("Edit"));
+        childElem.appendChild(editBtn);
+        // calculating subtotal
+        console.log(typeof subTotal.textContent);
+        subTotal.textContent =
+          Number(subTotal.textContent) + Number(data.itemPrice);
+
+        editBtn.onclick = async () => {
+          const editData = await axios.delete(
+            `https://crudcrud.com/api/b5e5eb1c40b84d57aab6c09a44baa9f1/products/${data._id}`
+          );
+          console.log(editData);
+          parentElem.removeChild(childElem);
+          subTotal.textContent =
+            Number(subTotal.textContent) - Number(data.itemPrice);
+
+          let itemName = document.getElementById("product");
+          let itemPrice = document.getElementById("price");
+          itemName.value = data.itemName;
+          itemPrice.value = data.itemPrice;
+        };
+
+        deleteBtn.onclick = async () => {
+          const deleteData = await axios.delete(
+            `https://crudcrud.com/api/b5e5eb1c40b84d57aab6c09a44baa9f1/products/${data._id}`
+          );
+          console.log(deleteData);
+          parentElem.removeChild(childElem);
+          subTotal.textContent =
+            Number(subTotal.textContent) - Number(data.itemPrice);
+        };
+      }
+    </script>
+  </body>
+</html>
